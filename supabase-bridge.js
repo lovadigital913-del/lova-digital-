@@ -49,6 +49,11 @@
   customPagesBox.className = 'adminbox';
   customPagesBox.innerHTML = '<h2>＋ زیادکردنی پەڕەی نوێ</h2><p class="hint">جۆری پەڕە هەڵبژێرە؛ ئایکۆنی گونجاو خۆکار دادەنرێت. پەیوەندی هەمیشە لە کۆتایی مینیو دەمێنێتەوە.</p><div class="formgrid"><input class="field" id="newPageTitle" placeholder="ناوی پەڕە"><input class="field" id="newPageNav" placeholder="ناوی کورت بۆ مینیو (ئارەزوومەندانە)"><select class="field" id="newPageIcon"><option value="website">وێبسایت · ئایکۆنی شاشە</option><option value="graphics">گرافیک · ئایکۆنی پەلێت</option><option value="portfolio">پۆرتفۆلیۆ · ئایکۆنی پەڕگە</option><option value="services">خزمەتگوزاری · ئایکۆنی بیرۆکە</option><option value="shop">فرۆشگا · ئایکۆنی سەبەتە</option><option value="contact">پەیوەندی · ئایکۆنی گفتوگۆ</option><option value="general">پەڕەی گشتی · ئایکۆنی خانە</option></select><input class="field" id="newPageEyebrow" placeholder="دەقی بچوکی سەرەوە"><input class="field" id="newPageSubtitle" placeholder="کورتەی پەڕە"><input class="field" id="newPageImageUrl" placeholder="لینکی وێنە (ئارەزوومەندانە)"><textarea class="field" id="newPageContent" placeholder="دەقی ناو پەڕە"></textarea><input class="field upload-field" id="newPageImageFile" type="file" accept="image/*" aria-label="وێنەی پەڕەی نوێ"><button class="btn solid" id="addCustomPage">زیادکردنی پەڕە</button></div><h3>پەڕە زیادکراوەکان</h3><div class="adminlist" id="adminCustomPages"></div>';
   pageTextBox.after(customPagesBox);
+  const customManager = document.createElement('div');
+  customManager.className = 'adminbox';
+  customManager.id = 'customPageManager';
+  customManager.innerHTML = '<h2>✦ لیست و نموونەی پەڕە نوێکان</h2><p class="hint">پەڕەیەک هەڵبژێرە، لیستی نوێ دروست بکە و نموونەی وێنەدار زیاد بکە.</p><div class="formgrid"><select class="field" id="manageCustomPage"></select><div class="formgrid"><input class="field" id="newCustomCategory" placeholder="ناوی لیستی نوێ، وەک لۆگۆ"><button class="btn" id="addCustomCategory">＋ زیادکردنی لیست</button></div><div class="adminlist" id="customCategoryRows"></div><h3>＋ زیادکردنی نموونە</h3><select class="field" id="customSampleCategory"></select><input class="field" id="customSampleTitle" placeholder="ناوی نموونە"><input class="field" id="customSampleImageUrl" placeholder="لینکی وێنە (ئارەزوومەندانە)"><input class="field upload-field" id="customSampleImageFile" type="file" accept="image/*" aria-label="وێنەی نموونە"><textarea class="field" id="customSampleDesc" placeholder="کورتەی نموونە"></textarea><input class="field" id="customSampleLink" placeholder="لینکی وێبسایت (ئارەزوومەندانە)"><button class="btn solid" id="addCustomSample">زیادکردنی نموونە</button></div><h3>نموونەکانی ئەم پەڕەیە</h3><div class="adminlist" id="customSampleRows"></div>';
+  customPagesBox.after(customManager);
   const pageAdminStyle = document.createElement('style');
   pageAdminStyle.textContent = '.page-copy-group{padding:14px 0;border-top:1px solid #ffffff14}.page-copy-group h3{color:#d8b5ff}.page-copy-field{display:grid;gap:6px;color:#c9c0d2;font-size:13px}.page-copy-field textarea{min-height:68px}.custom-page-content{margin-bottom:30px}';
   document.head.append(pageAdminStyle);
@@ -152,6 +157,7 @@
     await uploadImages(data.graphics, 'graphics');
     await uploadImages(data.sites, 'websites');
     await uploadImages(data.platforms, 'platforms');
+    for (const page of data.customPages) await uploadImages(page.samples || [], `custom-pages/${page.id}`);
     await uploadImages(data.customPages, 'custom-pages');
     if (data.home?.image?.startsWith('data:image/')) await uploadImages([data.home], 'home');
     const content = {
@@ -185,6 +191,52 @@
       `<div class="adminrow"><span>${item.image ? `<img src="${safe(item.image)}" alt="" style="width:42px;height:42px;object-fit:cover;border-radius:8px;vertical-align:middle;margin-inline-end:8px">` : ''}${safe(item.title || item.name)} <span class="hint">${safe(item.category || item.url || '')}</span></span><span><button class="btn" data-edit="${kind}" data-index="${i}">دەستکاری</button> <button class="delete" data-remove="${kind}" data-index="${i}">لابردن</button></span></div>`
     ).join('') || '<span class="hint">هیچ دانەیەک نییە.</span>';
   };
+  function activeCustomPage() { return data.customPages.find(page => page.id === document.getElementById('manageCustomPage').value); }
+  function renderCustomPageManager() {
+    const pages = data.customPages || [], pageSelect = document.getElementById('manageCustomPage');
+    const selected = pageSelect.value;
+    pageSelect.innerHTML = pages.map(page => `<option value="${safe(page.id)}">${safe(page.title)}</option>`).join('') || '<option value="">سەرەتا پەڕەیەکی نوێ زیاد بکە</option>';
+    if (pages.some(page => page.id === selected)) pageSelect.value = selected;
+    const page = activeCustomPage();
+    const cats = page?.categories || [];
+    document.getElementById('customCategoryRows').innerHTML = cats.map((name, i) => `<div class="adminrow"><span>${safe(name)}</span><button class="delete" data-custom-category-remove="${i}">لابردن</button></div>`).join('') || '<span class="hint">لیستێک زیاد بکە.</span>';
+    document.getElementById('customSampleCategory').innerHTML = cats.map(name => `<option value="${safe(name)}">${safe(name)}</option>`).join('') || '<option value="">سەرەتا لیست دروست بکە</option>';
+    document.getElementById('customSampleCategory').disabled = !page || !cats.length;
+    document.getElementById('addCustomSample').disabled = !page || !cats.length;
+    document.getElementById('customSampleRows').innerHTML = (page?.samples || []).map((sample, i) => `<div class="adminrow"><span>${sample.image ? `<img src="${safe(sample.image)}" alt="" style="width:42px;height:42px;object-fit:cover;border-radius:8px;vertical-align:middle;margin-inline-end:8px">` : ''}${safe(sample.title)} <span class="hint">${safe(sample.category || '')}</span></span><span><button class="btn" data-custom-sample-edit="${i}">دەستکاری</button> <button class="delete" data-custom-sample-remove="${i}">لابردن</button></span></div>`).join('') || '<span class="hint">هێشتا نموونە زیاد نەکراوە.</span>';
+  }
+  document.getElementById('manageCustomPage').addEventListener('change', renderCustomPageManager);
+  document.getElementById('addCustomCategory').addEventListener('click', () => {
+    const page = activeCustomPage(), input = document.getElementById('newCustomCategory'), name = input.value.trim();
+    if (!page) return toast('پەڕەیەک هەڵبژێرە یان پەڕەی نوێ زیاد بکە.');
+    if (!name) return toast('ناوی لیستەکە بنووسە.');
+    page.categories = page.categories || [];
+    if (page.categories.some(value => value.toLowerCase() === name.toLowerCase())) return toast('ئەم لیستە پێشتر هەیە.');
+    page.categories.push(name); input.value = ''; renderCustomPageManager(); publish().catch(error => toast(`پاشەکەوت نەکرا: ${String(error?.message || '').slice(0,100)}`));
+  });
+  document.getElementById('addCustomSample').addEventListener('click', () => {
+    const page = activeCustomPage(), title = document.getElementById('customSampleTitle').value.trim(), file = document.getElementById('customSampleImageFile').files?.[0];
+    if (!page) return toast('پەڕەیەک هەڵبژێرە.');
+    if (!(page.categories || []).length) return toast('سەرەتا لیستێک دروست بکە.');
+    if (!title) return toast('ناوی نموونەکە بنووسە.');
+    if (file && (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024)) return toast('وێنەی دروست و بچووکتر لە ٥ مێگابایت هەڵبژێرە.');
+    const add = image => {
+      page.samples = page.samples || [];
+      page.samples.unshift({ title, category:document.getElementById('customSampleCategory').value, image:image || document.getElementById('customSampleImageUrl').value.trim(), desc:document.getElementById('customSampleDesc').value.trim(), url:document.getElementById('customSampleLink').value.trim() });
+      publish().then(() => { ['customSampleTitle','customSampleImageUrl','customSampleImageFile','customSampleDesc','customSampleLink'].forEach(id => document.getElementById(id).value = ''); toast('نموونە زیاد و پاشەکەوت کرا.') }).catch(error => toast(`پاشەکەوت نەکرا: ${String(error?.message || '').slice(0,100)}`));
+    };
+    if (!file) return add('');
+    const reader = new FileReader(); reader.onload = () => add(String(reader.result)); reader.onerror = () => toast('خوێندنەوەی وێنەکە سەرکەوتوو نەبوو.'); reader.readAsDataURL(file);
+  });
+  customManager.addEventListener('click', event => {
+    const page = activeCustomPage(); if (!page || !ownerSignedIn) return;
+    const removeCategory = event.target.closest('[data-custom-category-remove]');
+    if (removeCategory) { const index = Number(removeCategory.dataset.customCategoryRemove), name = page.categories[index]; if (!confirm(`لیستی «${name}» لاببرێت؟ نموونەکان دەمێننەوە و بەبێ جۆر پیشان دەدرێن.`)) return; page.categories.splice(index,1); (page.samples || []).forEach(sample => { if (sample.category === name) sample.category = ''; }); renderCustomPageManager(); publish().catch(error => toast(`پاشەکەوت نەکرا: ${String(error?.message || '').slice(0,100)}`)); return; }
+    const remove = event.target.closest('[data-custom-sample-remove]');
+    if (remove) { const index = Number(remove.dataset.customSampleRemove); if (!confirm('ئەم نموونەیە بسڕمەوە؟')) return; page.samples.splice(index,1); renderCustomPageManager(); publish().catch(error => toast(`پاشەکەوت نەکرا: ${String(error?.message || '').slice(0,100)}`)); return; }
+    const edit = event.target.closest('[data-custom-sample-edit]');
+    if (edit) { const sample = page.samples[Number(edit.dataset.customSampleEdit)]; if (!sample) return; const title = prompt('ناوی نموونە:', sample.title || ''); if (title === null) return; const category = prompt('ناوی لیست:', sample.category || ''); if (category === null) return; const desc = prompt('کورتەی نموونە:', sample.desc || ''); if (desc === null) return; const url = prompt('لینکی وێبسایت (ئارەزوومەندانە):', sample.url || ''); if (url === null) return; const image = prompt('لینکی وێنە (بەتاڵ بهێڵە بۆ هێشتنەوەی وێنەی ئێستا):', sample.image || ''); if (image === null) return; sample.title=title.trim(); sample.category=category.trim(); sample.desc=desc.trim(); sample.url=url.trim(); if (image.trim()) sample.image=image.trim(); publish().catch(error => toast(`پاشەکەوت نەکرا: ${String(error?.message || '').slice(0,100)}`)); }
+  });
   document.addEventListener('click', event => {
     const button = event.target.closest('[data-edit]');
     if (!button || !ownerSignedIn) return;
@@ -268,7 +320,8 @@
     const file = document.getElementById('newPageImageFile').files?.[0];
     if (file && (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024)) return toast('وێنەی دروست و بچووکتر لە ٥ مێگابایت هەڵبژێرە.');
     const addPage = image => {
-      data.customPages.unshift({ id:`page-${Date.now().toString(36)}`, title, navTitle:document.getElementById('newPageNav').value.trim()||title, icon:document.getElementById('newPageIcon').value, eyebrow:document.getElementById('newPageEyebrow').value.trim(), subtitle:document.getElementById('newPageSubtitle').value.trim(), content:document.getElementById('newPageContent').value.trim(), image:image||imageUrl });
+      data.customPages.unshift({ id:`page-${Date.now().toString(36)}`, title, navTitle:document.getElementById('newPageNav').value.trim()||title, icon:document.getElementById('newPageIcon').value, eyebrow:document.getElementById('newPageEyebrow').value.trim(), subtitle:document.getElementById('newPageSubtitle').value.trim(), content:document.getElementById('newPageContent').value.trim(), image:image||imageUrl, categories:[], samples:[] });
+      renderCustomPageManager();
       publish().then(() => { ['newPageTitle','newPageNav','newPageEyebrow','newPageSubtitle','newPageImageUrl','newPageContent','newPageImageFile'].forEach(id=>{document.getElementById(id).value=''}); toast('پەڕەی نوێ زیاد و پاشەکەوت کرا.') }).catch(error => toast(`پاشەکەوت نەکرا: ${String(error?.message || '').slice(0,100)}`));
     };
     if (!file) return addPage('');
@@ -278,6 +331,7 @@
   render = function () {
     originalRender();
     adminRows('customPages', 'adminCustomPages');
+    renderCustomPageManager();
     document.querySelectorAll('#contactPlatforms .platform').forEach((element, i) => {
       const platform = data.platforms[i];
       if (platform?.image) element.innerHTML = `<img src="${safe(platform.image)}" alt="" style="width:26px;height:26px;object-fit:cover;border-radius:7px;vertical-align:middle;margin-inline-end:7px">${safe(platform.name)}`;

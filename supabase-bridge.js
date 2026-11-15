@@ -52,11 +52,14 @@
   }
   function refreshLists(cats) {
     ownerCategories = cats || { graphics: [], sites: [] };
-    graphicLists = [...new Set([...graphicBase, ...(ownerCategories.graphics || [])])];
-    websiteLists = [...new Set([...allowedWebsiteTypes, ...(ownerCategories.sites || [])])];
+    graphicLists = ownerCategories.managed
+      ? [...new Set(ownerCategories.graphics || [])]
+      : [...new Set([...graphicBase, ...(ownerCategories.graphics || [])])];
+    websiteLists = ownerCategories.managed
+      ? [...new Set(ownerCategories.sites || [])]
+      : [...new Set([...allowedWebsiteTypes, ...(ownerCategories.sites || [])])];
     refreshOwnerControls();
-    document.getElementById('graphicListTags').innerHTML = graphicLists.map(x => `<span class="list-tag">${safe(x)}</span>`).join('');
-    document.getElementById('siteListTags').innerHTML = websiteLists.map(x => `<span class="list-tag">${safe(x)}</span>`).join('');
+    renderOwnerListTags();
   }
   async function loadContent() {
     const { data: row, error } = await db.from('lova_site_content').select('content').eq('id', 'main').single();

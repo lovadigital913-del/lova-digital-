@@ -33,6 +33,48 @@
   homeBox.className = 'adminbox';
   homeBox.innerHTML = '<h2>✦ دەستکاریکردنی پەڕەی سەرەکی</h2><p class="hint">سەردێڕ، وەسف، دوگمە و وێنەی گەورەی سەرەتا بگۆڕە؛ پاشان پاشەکەوتی بکە بۆ ئەوەی لە ماڵپەڕی خەڵکیش نوێ ببێتەوە.</p><div class="formgrid"><input class="field" id="homeEyebrow" placeholder="دەقی بچوکی سەرەوە"><input class="field" id="homeTitleFirst" placeholder="ڕیزی یەکەمی سەردێڕ"><input class="field" id="homeTitleAccent" placeholder="ڕیزی دووەمی سەردێڕ"><input class="field" id="homeBadgeOne" placeholder="بەشی بچوکی سەر وێنە"><input class="field" id="homeBadgeTwo" placeholder="بەشی بچوکی خوار وێنە"><input class="field" id="homeButtonWork" placeholder="دەقی دوگمەی کارەکان"><input class="field" id="homeButtonContact" placeholder="دەقی دوگمەی پەیوەندی"><input class="field" id="homeImageUrl" placeholder="لینکی وێنەی سەرەکی (ئارەزوومەندانە)"><textarea class="field" id="homeDescription" placeholder="وەسفی پەڕەی سەرەکی"></textarea><input class="field upload-field" id="homeImageFile" type="file" accept="image/*" aria-label="هەڵبژاردنی وێنەی سەرەکی"><button class="btn solid" id="saveHome">پاشەکەوتکردنی پەڕەی سەرەکی</button></div>';
   loginBox.after(homeBox);
+  const textGroups = [
+    ['پەڕەی سەرەکی', [['homeNav','ناوی پەڕە لە مینیو'],['servicesEyebrow','سەردێڕی بچوکی خزمەتگوزاری'],['servicesTitle','سەردێڕی خزمەتگوزاری'],['servicesDescription','کورتەی خزمەتگوزاری'],['serviceGraphicTitle','ناوی خزمەتی گرافیک'],['serviceGraphicText','وەسفی خزمەتی گرافیک'],['serviceWebTitle','ناوی خزمەتی وێبسایت'],['serviceWebText','وەسفی خزمەتی وێبسایت'],['serviceDigitalTitle','ناوی خزمەتی دیجیتاڵ'],['serviceDigitalText','وەسفی خزمەتی دیجیتاڵ'],['homeCtaTitle','سەردێڕی کۆتایی پەڕە'],['homeCtaText','دەقی کۆتایی پەڕە'],['platformsEyebrow','سەردێڕی پلاتفۆرمەکان'],['platformsTitle','ناونیشانی بەشی پلاتفۆرمەکان'],['platformsSubtitle','دەقی بەشی پلاتفۆرمەکان']]],
+    ['پەڕەی گرافیک دیزاین', [['graphicsNav','ناوی لە مینیو'],['graphicsEyebrow','سەردێڕی بچووک'],['graphicsTitle','ناونیشانی پەڕە'],['graphicsSubtitle','کورتەی پەڕە']]],
+    ['پەڕەی وێبسایت', [['websitesNav','ناوی لە مینیو'],['websitesEyebrow','سەردێڕی بچووک'],['websitesTitle','ناونیشانی پەڕە'],['websitesSubtitle','کورتەی پەڕە']]],
+    ['پەڕەی پەیوەندی', [['contactNav','ناوی لە مینیو'],['contactEyebrow','سەردێڕی بچووک'],['contactTitle','ناونیشانی پەڕە'],['contactSubtitle','کورتەی پەڕە'],['contactBoxTitle','ناونیشانی خانەی پەیوەندی'],['contactBoxText','دەقی خانەی پەیوەندی']]]
+  ];
+  const longTextKeys = new Set(['servicesDescription','serviceGraphicText','serviceWebText','serviceDigitalText','homeCtaText','platformsSubtitle','graphicsSubtitle','websitesSubtitle','contactSubtitle','contactBoxText']);
+  const pageTextBox = document.createElement('div');
+  pageTextBox.className = 'adminbox';
+  pageTextBox.id = 'pageCopyBox';
+  pageTextBox.innerHTML = '<h2>✎ دەستکاریکردنی ناو و دەقی پەڕەکان</h2><p class="hint">ناوی مینیو، سەردێڕ و دەقی پەڕەکان بگۆڕە؛ پەیوەندی هەمیشە لە دوای پەڕە نوێکان دەمێنێتەوە.</p>' + textGroups.map(([title, fields]) => `<section class="page-copy-group"><h3>${title}</h3><div class="formgrid">${fields.map(([key,label]) => `<label class="page-copy-field"><span>${label}</span>${longTextKeys.has(key)?`<textarea class="field" id="pagecopy-${key}"></textarea>`:`<input class="field" id="pagecopy-${key}">`}</label>`).join('')}</div></section>`).join('') + '<button class="btn solid" id="savePageCopy">پاشەکەوتکردنی دەقەکان</button>';
+  homeBox.after(pageTextBox);
+  const customPagesBox = document.createElement('div');
+  customPagesBox.className = 'adminbox';
+  customPagesBox.innerHTML = '<h2>＋ زیادکردنی پەڕەی نوێ</h2><p class="hint">جۆری پەڕە هەڵبژێرە؛ ئایکۆنی گونجاو خۆکار دادەنرێت. پەیوەندی هەمیشە لە کۆتایی مینیو دەمێنێتەوە.</p><div class="formgrid"><input class="field" id="newPageTitle" placeholder="ناوی پەڕە"><input class="field" id="newPageNav" placeholder="ناوی کورت بۆ مینیو (ئارەزوومەندانە)"><select class="field" id="newPageIcon"><option value="website">وێبسایت · ئایکۆنی شاشە</option><option value="graphics">گرافیک · ئایکۆنی پەلێت</option><option value="portfolio">پۆرتفۆلیۆ · ئایکۆنی پەڕگە</option><option value="services">خزمەتگوزاری · ئایکۆنی بیرۆکە</option><option value="shop">فرۆشگا · ئایکۆنی سەبەتە</option><option value="contact">پەیوەندی · ئایکۆنی گفتوگۆ</option><option value="general">پەڕەی گشتی · ئایکۆنی خانە</option></select><input class="field" id="newPageEyebrow" placeholder="دەقی بچوکی سەرەوە"><input class="field" id="newPageSubtitle" placeholder="کورتەی پەڕە"><input class="field" id="newPageImageUrl" placeholder="لینکی وێنە (ئارەزوومەندانە)"><textarea class="field" id="newPageContent" placeholder="دەقی ناو پەڕە"></textarea><input class="field upload-field" id="newPageImageFile" type="file" accept="image/*" aria-label="وێنەی پەڕەی نوێ"><button class="btn solid" id="addCustomPage">زیادکردنی پەڕە</button></div><h3>پەڕە زیادکراوەکان</h3><div class="adminlist" id="adminCustomPages"></div>';
+  pageTextBox.after(customPagesBox);
+  const pageAdminStyle = document.createElement('style');
+  pageAdminStyle.textContent = '.page-copy-group{padding:14px 0;border-top:1px solid #ffffff14}.page-copy-group h3{color:#d8b5ff}.page-copy-field{display:grid;gap:6px;color:#c9c0d2;font-size:13px}.page-copy-field textarea{min-height:68px}.custom-page-content{margin-bottom:30px}';
+  document.head.append(pageAdminStyle);
+  ['gCategory', 'sCategory'].forEach((id) => {
+    const select = document.getElementById(id);
+    if (!select) return;
+    const kind = id === 'gCategory' ? 'graphics' : 'sites';
+    const group = document.createElement('div');
+    group.className = 'category-control';
+    select.parentNode.insertBefore(group, select);
+    group.append(select);
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'delete';
+    removeButton.textContent = 'لابردنی جۆری هەڵبژێردراو';
+    removeButton.addEventListener('click', () => {
+      const lists = kind === 'graphics' ? graphicLists : websiteLists;
+      const index = lists.indexOf(select.value);
+      if (index < 0) return toast('جۆرێک هەڵبژێرە بۆ لابردن.');
+      document.querySelector(`[data-list-remove="${kind}"][data-index="${index}"]`)?.click();
+    });
+    group.append(removeButton);
+  });
+  const categoryStyle = document.createElement('style');
+  categoryStyle.textContent = '.category-control{display:grid;gap:8px;min-width:0}.category-control .field{width:100%}';
+  document.head.append(categoryStyle);
   admin.querySelector('.pagehead .sub').textContent = 'لە بەڕێوەبردنەوە ناوەڕۆکی پەڕەی سەرەکی، نموونەکان و پلاتفۆرمەکان بگۆڕە؛ پاشەکەوتەکان لە Supabase هەڵدەگیرێن و لە ماڵپەڕی گشتی نوێ دەبنەوە.';
   const oldLocalHint = [...admin.querySelectorAll('.hint')].find(element => element.textContent.includes('پاراستنی خۆجێییە'));
   if (oldLocalHint) oldLocalHint.textContent = 'ناوەڕۆکەکان لە Supabase پاشەکەوت دەکرێن و لە هەموو ئامێرێکەوە بەڕێوە دەبرێن.';
@@ -69,17 +111,27 @@
     data.sites = Array.isArray(value.sites) ? value.sites : [];
     data.platforms = Array.isArray(value.platforms) ? value.platforms : [];
     data.home = { ...homeDefaults, ...(value.home || {}) };
+    data.pageSettings = { ...pageSettingsDefaults, ...(value.pageSettings || {}) };
+    data.customPages = Array.isArray(value.customPages) ? value.customPages : [];
     const whatsApp = data.platforms.find(item => /whatsapp|واتسئاپ|واتساپ/i.test(item.name || '') || /wa\.me/i.test(item.url || ''));
     if (whatsApp) { whatsApp.name = 'WhatsApp'; whatsApp.url = fixedWhatsAppUrl; }
     else data.platforms.unshift({ name: 'WhatsApp', url: fixedWhatsAppUrl });
     refreshLists(value.categories);
     contentLoaded = true;
     fillHomeForm();
+    fillPageCopyForm();
     render();
   }
   function fillHomeForm() {
     const h = data.home || homeDefaults;
     [['homeEyebrow','eyebrow'],['homeTitleFirst','titleFirst'],['homeTitleAccent','titleAccent'],['homeDescription','description'],['homeImageUrl','image'],['homeBadgeOne','badgeOne'],['homeBadgeTwo','badgeTwo'],['homeButtonWork','buttonWork'],['homeButtonContact','buttonContact']].forEach(([id,key]) => { const input = document.getElementById(id); if (input) input.value = h[key] || ''; });
+  }
+  function fillPageCopyForm() {
+    const settings = data.pageSettings || pageSettingsDefaults;
+    Object.keys(pageSettingsDefaults).forEach(key => {
+      const input = document.getElementById(`pagecopy-${key}`);
+      if (input) input.value = settings[key] || '';
+    });
   }
   async function uploadImages(items, group) {
     for (const item of items) {
@@ -100,12 +152,15 @@
     await uploadImages(data.graphics, 'graphics');
     await uploadImages(data.sites, 'websites');
     await uploadImages(data.platforms, 'platforms');
+    await uploadImages(data.customPages, 'custom-pages');
     if (data.home?.image?.startsWith('data:image/')) await uploadImages([data.home], 'home');
     const content = {
       graphics: data.graphics,
       sites: data.sites,
       platforms: data.platforms,
       home: data.home,
+      pageSettings: data.pageSettings,
+      customPages: data.customPages,
       categories: ownerCategories
     };
     const { data: updated, error } = await db.from('lova_site_content')
@@ -135,6 +190,20 @@
     if (!button || !ownerSignedIn) return;
     const kind = button.dataset.edit, item = data[kind]?.[Number(button.dataset.index)];
     if (!item) return;
+    if (kind === 'customPages') {
+      const title = prompt('ناوی پەڕە:', item.title || ''); if (title === null) return;
+      const navTitle = prompt('ناوی پەڕە لە مینیو:', item.navTitle || item.title || ''); if (navTitle === null) return;
+      const eyebrow = prompt('دەقی بچوکی سەرەوە:', item.eyebrow || ''); if (eyebrow === null) return;
+      const subtitle = prompt('کورتەی پەڕە:', item.subtitle || ''); if (subtitle === null) return;
+      const content = prompt('دەقی ناو پەڕە:', item.content || ''); if (content === null) return;
+      const icon = prompt('ئایکۆن: website / graphics / portfolio / services / shop / contact / general', item.icon || 'general'); if (icon === null) return;
+      const image = prompt('لینکی وێنە (بەتاڵ بهێڵە بۆ وێنەی پێشوو):', item.image || ''); if (image === null) return;
+      item.title = title.trim(); item.navTitle = navTitle.trim(); item.eyebrow = eyebrow.trim(); item.subtitle = subtitle.trim(); item.content = content.trim();
+      item.icon = ['website','graphics','portfolio','services','shop','contact','general'].includes(icon.trim()) ? icon.trim() : 'general';
+      if (image.trim()) item.image = image.trim();
+      save('customPages');
+      return;
+    }
     const titleKey = kind === 'platforms' ? 'name' : 'title';
     const title = prompt('ناو:', item[titleKey] || ''); if (title === null) return;
     const category = kind === 'platforms' ? item.category : prompt('جۆر/لیست:', item.category || '');
@@ -187,9 +256,28 @@
     if (file.size > 5 * 1024 * 1024) return toast('وێنەکە گەورەیە؛ وێنەی بچووکتر هەڵبژێرە.');
     const reader = new FileReader(); reader.onload = () => { h.image = String(reader.result); finish(); }; reader.onerror = () => toast('خوێندنەوەی وێنەکە سەرکەوتوو نەبوو.'); reader.readAsDataURL(file);
   };
+  document.getElementById('savePageCopy').onclick = () => {
+    const settings = data.pageSettings || (data.pageSettings = { ...pageSettingsDefaults });
+    Object.keys(pageSettingsDefaults).forEach(key => { const field = document.getElementById(`pagecopy-${key}`); if (field) settings[key] = field.value.trim(); });
+    publish().then(() => toast('ناو و دەقی پەڕەکان پاشەکەوت کران.')).catch(error => toast(`پاشەکەوت نەکرا: ${String(error?.message || '').slice(0,100)}`));
+  };
+  document.getElementById('addCustomPage').onclick = () => {
+    const title = document.getElementById('newPageTitle').value.trim();
+    if (!title) return toast('ناوی پەڕەکە بنووسە.');
+    const imageUrl = document.getElementById('newPageImageUrl').value.trim();
+    const file = document.getElementById('newPageImageFile').files?.[0];
+    if (file && (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024)) return toast('وێنەی دروست و بچووکتر لە ٥ مێگابایت هەڵبژێرە.');
+    const addPage = image => {
+      data.customPages.unshift({ id:`page-${Date.now().toString(36)}`, title, navTitle:document.getElementById('newPageNav').value.trim()||title, icon:document.getElementById('newPageIcon').value, eyebrow:document.getElementById('newPageEyebrow').value.trim(), subtitle:document.getElementById('newPageSubtitle').value.trim(), content:document.getElementById('newPageContent').value.trim(), image:image||imageUrl });
+      publish().then(() => { ['newPageTitle','newPageNav','newPageEyebrow','newPageSubtitle','newPageImageUrl','newPageContent','newPageImageFile'].forEach(id=>{document.getElementById(id).value=''}); toast('پەڕەی نوێ زیاد و پاشەکەوت کرا.') }).catch(error => toast(`پاشەکەوت نەکرا: ${String(error?.message || '').slice(0,100)}`));
+    };
+    if (!file) return addPage('');
+    const reader = new FileReader(); reader.onload = () => addPage(String(reader.result)); reader.onerror = () => toast('خوێندنەوەی وێنەکە سەرکەوتوو نەبوو.'); reader.readAsDataURL(file);
+  };
   const originalRender = render;
   render = function () {
     originalRender();
+    adminRows('customPages', 'adminCustomPages');
     document.querySelectorAll('#contactPlatforms .platform').forEach((element, i) => {
       const platform = data.platforms[i];
       if (platform?.image) element.innerHTML = `<img src="${safe(platform.image)}" alt="" style="width:26px;height:26px;object-fit:cover;border-radius:7px;vertical-align:middle;margin-inline-end:7px">${safe(platform.name)}`;

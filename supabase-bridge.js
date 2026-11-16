@@ -87,14 +87,12 @@
   const status = document.getElementById('sharedStatus');
   const loginFields = document.getElementById('loginFields');
   const loginButton = document.getElementById('ownerLogin');
-  const protectedBoxes = [...admin.children].filter(box => box !== loginBox);
+  const protectedBoxes = [...admin.querySelectorAll('.adminbox')].filter(box => box !== loginBox);
   let db = null;
-  const ownerEmailAllowed = 'lovadigital913@gmail.com';
   let ownerSignedIn = false;
-  let contentLoaded = false;`n  let contentLoadPromise = null;
+  let contentLoaded = false;
 
   function setAccess() {
-    admin.closest('#admin')?.classList.toggle('owner-authenticated', ownerSignedIn);
     protectedBoxes.forEach(box => box.style.display = ownerSignedIn ? '' : 'none');
     loginFields.style.display = ownerSignedIn ? 'none' : 'grid';
     document.getElementById('ownerLogout').style.display = ownerSignedIn ? '' : 'none';
@@ -128,18 +126,6 @@
     fillHomeForm();
     fillPageCopyForm();
     render();
-  }
-  async function ensureContentLoaded() {
-    if (contentLoaded) return true;
-    if (!contentLoadPromise) {
-      contentLoadPromise = loadContent().then(() => true).catch(error => {
-        console.error('Could not load shared site content:', error);
-        const detail = String(error?.message || error?.details || 'هەڵەی پەیوەندی').replace(/\s+/g, ' ').slice(0, 100);
-        status.textContent = `داتاکان بار نەبوون (${detail}). چوونەژوورەوە دەتوانیت تاقی بکەیتەوە؛ بۆ پاشەکەوتکردن Supabase و SQL دەبێت چالاک بن.`;
-        return false;
-      }).finally(() => { contentLoadPromise = null; });
-    }
-    return contentLoadPromise;
   }
   function fillHomeForm() {
     const h = data.home || homeDefaults;
@@ -362,65 +348,49 @@
     setAccess();
     return;
   }
-  db = window.supabase.createClient(window.LOVA_SUPABASE_URL, window.LOVA_SUPABASE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+  db = window.supabase.createClient(window.LOVA_SUPABASE_URL, window.LOVA_SUPABASE_KEY);
   setAccess();
-  loginButton.disabled = false;
-  status.textContent = 'ئیمەیڵ و وشەی نهێنی بنووسە بۆ چوونەژوورەوە.';
+  loginButton.disabled = true;
+  status.textContent = 'داتاکان لە Supabase بار دەکرێن...';
 
   loginButton.addEventListener('click', async () => {
+    if (!contentLoaded) return toast('تکایە چاوەڕێ بکە داتاکان بار ببن.');
     const email = document.getElementById('ownerEmail').value.trim();
     const password = document.getElementById('ownerPassword').value;
-    if (!email || !password) { status.textContent = 'تکایە ئیمەیڵ و وشەی نهێنی پڕ بکەرەوە.'; return toast('ئیمەیڵ و وشەی نهێنی بنووسە.'); }
+    if (!email || !password) return toast('ئیمەیڵ و وشەی نهێنی بنووسە.');
     const button = document.getElementById('ownerLogin');
     button.disabled = true;
-    status.textContent = 'چوونەژوورەوە پشکنین دەکرێت...';
-    try {
-      const { data: authData, error } = await db.auth.signInWithPassword({ email, password });
-      if (error) {
-        console.error('Admin sign-in failed:', error);
-        status.textContent = 'چوونەژوورەوە سەرکەوتوو نەبوو. لە Supabase > Authentication > Users دڵنیابە هەژمارەکە دروستکراوە و ئیمەیڵەکە پشتڕاست کراوەتەوە.';
-        return toast('ئیمەیڵ یان وشەی نهێنی لە Supabase دروست نییە، یان هەژمارەکە پشتڕاست نەکراوەتەوە.');
-      }
-      if (String(authData?.user?.email || '').toLowerCase() !== ownerEmailAllowed) {
-        await db.auth.signOut();
-        status.textContent = `تەنها ${ownerEmailAllowed} دەسەڵاتی بەڕێوەبردنی هەیە.`;
-        return toast('ئەم ئیمەیڵە دەسەڵاتی بەڕێوەبەری نییە.');
-      }
-      ownerSignedIn = true;
-      setAccess();
-      document.getElementById('ownerPassword').value = '';
-      const loaded = await ensureContentLoaded();
-      status.textContent = loaded
-        ? 'چوویتە ژوورەوە؛ ئێستا دەتوانیت بەشی بەڕێوەبردن بەکاربهێنیت.'
-        : 'چوویتە ژوورەوە، بەڵام داتاکانی Supabase بار نەبوون. SQL و ڕێکخستنی داتابەیس بپشکنە؛ گۆڕانکارییەکان تا ئەو کاتە پاشەکەوت نابن.';
-      if (loaded) toast('چوویتە ژوورەوە.');
-    } catch (error) {
-      console.error('Admin sign-in error:', error);
-      status.textContent = 'پەیوەندی بە Supabase نەکرا. ئینتەرنێت و supabase-config.js بپشکنە.';
-      toast('پەیوەندی بە Supabase نەکرا؛ دووبارە هەوڵ بدە.');
-    } finally {
-      button.disabled = false;
-    }
+    const { error } = await db.auth.signInWithPassword({ email, password });
+    button.disabled = false;
+    if (error) return toast('ئیمەیڵ یان وشەی نهێنی دروست نییە.');
+    document.getElementById('ownerPassword').value = '';
   });
-
   document.getElementById('ownerLogout').addEventListener('click', async () => {
     await db.auth.signOut();
   });
 
-  db.auth.onAuthStateChange((_event, session) => {
-    ownerSignedIn = String(session?.user?.email || '').toLowerCase() === ownerEmailAllowed;
-    setAccess();
-    if (session && !ownerSignedIn) db.auth.signOut();
-    if (!ownerSignedIn) status.textContent = 'بۆ بینینی فۆڕمەکانی بەڕێوەبردن بە ئیمەیڵ و وشەی نهێنی بچۆ ژوورەوە.';
-  });
-
-  ensureContentLoaded().then(loaded => {
-    if (ownerSignedIn) {
-      status.textContent = loaded
-        ? 'چوویتە ژوورەوە؛ دەتوانیت بەشی بەڕێوەبردن بەکاربهێنیت.'
-        : 'داتاکان بار نەبوون؛ Supabase و SQL بپشکنە.';
-    } else if (loaded) {
-      status.textContent = 'بۆ بینینی فۆڕمەکانی بەڕێوەبردن بە ئیمەیڵ و وشەی نهێنی بچۆ ژوورەوە.';
+  (async () => {
+    try {
+      await loadContent();
+      loginButton.disabled = false;
+      const { data: { session } } = await db.auth.getSession();
+      ownerSignedIn = !!session;
+      setAccess();
+      status.textContent = ownerSignedIn
+        ? 'چوویتە ژوورەوە؛ دەتوانیت نموونە، وێنە، لیست و پلاتفۆرمەکان بەڕێوە ببەیت.'
+        : 'نموونەکان بۆ هەمووان دەردەکەون. بۆ دەستکاری بە ئیمەیڵ و وشەی نهێنی بچۆ ژوورەوە.';
+      db.auth.onAuthStateChange((_event, session) => {
+        ownerSignedIn = !!session;
+        setAccess();
+        status.textContent = ownerSignedIn
+          ? 'چوویتە ژوورەوە؛ گۆڕانکارییەکان بۆ هەمووان پاشەکەوت دەبن.'
+          : 'چوویتە دەرەوە؛ نموونە هاوبەشەکان بۆ خەڵک دەمێننەوە.';
+      });
+    } catch (error) {
+      console.error(error);
+      loginButton.disabled = true;
+      status.textContent = 'Supabase پەیوەست بوو، بەڵام داتابەیس/SQL ئامادە نییە یان URL و key هەڵەن.';
+      setAccess();
     }
-  });
+  })();
 })();

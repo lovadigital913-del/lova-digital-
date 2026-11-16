@@ -87,8 +87,9 @@
   const status = document.getElementById('sharedStatus');
   const loginFields = document.getElementById('loginFields');
   const loginButton = document.getElementById('ownerLogin');
-  const protectedBoxes = [...admin.querySelectorAll('.adminbox')].filter(box => box !== loginBox);
+  const protectedBoxes = [...admin.children].filter(box => box !== loginBox);
   let db = null;
+  const ownerEmailAllowed = 'lovadigital913@gmail.com';
   let ownerSignedIn = false;
   let contentLoaded = false;
 
@@ -363,6 +364,8 @@
     const { error } = await db.auth.signInWithPassword({ email, password });
     button.disabled = false;
     if (error) return toast('ئیمەیڵ یان وشەی نهێنی دروست نییە.');
+    const { data: { user } } = await db.auth.getUser();
+    if (String(user?.email || '').toLowerCase() !== ownerEmailAllowed) { await db.auth.signOut(); return toast('ئەم ئیمەیڵە دەسەڵاتی بەڕێوەبەری نییە.'); }
     document.getElementById('ownerPassword').value = '';
   });
   document.getElementById('ownerLogout').addEventListener('click', async () => {
@@ -374,13 +377,13 @@
       await loadContent();
       loginButton.disabled = false;
       const { data: { session } } = await db.auth.getSession();
-      ownerSignedIn = !!session;
+      ownerSignedIn = String(session?.user?.email || '').toLowerCase() === ownerEmailAllowed;
       setAccess();
       status.textContent = ownerSignedIn
         ? 'چوویتە ژوورەوە؛ دەتوانیت نموونە، وێنە، لیست و پلاتفۆرمەکان بەڕێوە ببەیت.'
         : 'نموونەکان بۆ هەمووان دەردەکەون. بۆ دەستکاری بە ئیمەیڵ و وشەی نهێنی بچۆ ژوورەوە.';
       db.auth.onAuthStateChange((_event, session) => {
-        ownerSignedIn = !!session;
+        ownerSignedIn = String(session?.user?.email || '').toLowerCase() === ownerEmailAllowed;
         setAccess();
         status.textContent = ownerSignedIn
           ? 'چوویتە ژوورەوە؛ گۆڕانکارییەکان بۆ هەمووان پاشەکەوت دەبن.'

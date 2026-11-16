@@ -94,6 +94,7 @@
   let contentLoaded = false;
 
   function setAccess() {
+    admin.closest('#admin')?.classList.toggle('owner-authenticated', ownerSignedIn);
     protectedBoxes.forEach(box => box.style.display = ownerSignedIn ? '' : 'none');
     loginFields.style.display = ownerSignedIn ? 'none' : 'grid';
     document.getElementById('ownerLogout').style.display = ownerSignedIn ? '' : 'none';
@@ -349,7 +350,7 @@
     setAccess();
     return;
   }
-  db = window.supabase.createClient(window.LOVA_SUPABASE_URL, window.LOVA_SUPABASE_KEY);
+  db = window.supabase.createClient(window.LOVA_SUPABASE_URL, window.LOVA_SUPABASE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
   setAccess();
   loginButton.disabled = true;
   status.textContent = 'داتاکان لە Supabase بار دەکرێن...';

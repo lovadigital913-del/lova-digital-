@@ -123,12 +123,12 @@
       const hasRemoteArray = Array.isArray(value[key]);
       const remoteItems = hasRemoteArray ? value[key] : [];
       const localItems = cachedArray(key);
-      // Keep existing samples on a fresh project until the owner saves them.
-      // Once synced, an empty shared list stays empty after deletions.
-      if (sharedContentIsAuthoritative && hasRemoteArray) data[key] = remoteItems;
-      else if (remoteItems.length) data[key] = remoteItems;
+      // Prefer populated shared data. If Supabase was accidentally saved empty,
+      // recover the owner's browser copy before showing an empty admin list.
+      // An explicit empty local array still means the owner intentionally cleared it.
+      if (remoteItems.length) data[key] = remoteItems;
       else if (localItems?.length) { data[key] = localItems; recoveredLocalData = true; }
-      else if (Array.isArray(data[key]) && data[key].length) recoveredLocalData = true;
+      else if (localItems === null && Array.isArray(data[key]) && data[key].length) recoveredLocalData = true;
       else data[key] = remoteItems;
     });
     data.home = { ...homeDefaults, ...(value.home || {}) };
@@ -141,7 +141,7 @@
     const localHasCategories = (ownerCategories?.graphics || []).length || (ownerCategories?.sites || []).length;
     if (sharedContentIsAuthoritative || (remoteCategories.graphics || []).length || (remoteCategories.sites || []).length) refreshLists(remoteCategories);
     else refreshLists(ownerCategories);
-    localRecoveryPending = !sharedContentIsAuthoritative && (recoveredLocalData || (!(remoteCategories.graphics || []).length && !(remoteCategories.sites || []).length && !!localHasCategories));
+    localRecoveryPending = recoveredLocalData || (!sharedContentIsAuthoritative && (!(remoteCategories.graphics || []).length && !(remoteCategories.sites || []).length && !!localHasCategories));
     contentLoaded = true;
     fillHomeForm();
     fillPageCopyForm();
